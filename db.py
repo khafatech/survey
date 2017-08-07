@@ -60,6 +60,7 @@ def setup():
     for query in schema.split(';'):
         con.execute(query)
 
+
 def execute(query, *args):
     con = get_con()
     cur = con.cursor()
@@ -68,17 +69,23 @@ def execute(query, *args):
     return cur
 
 
+def tuple_list_to_dict_list(tuple_list, keys):
+    
+    dict_list = []
+    for row in tuple_list:
+        dict_list.append(dict(zip(keys, row)))
+    
+    return dict_list
+
+
 def answer_question(question_id, answer):
 
-    # if answer == 'yes':
-    # elif answer == 'no':
     if answer not in ["yes", "no"]:
+        # FIXME - use specific Exception
         raise Exception("answer should be yes or no")
     
     for stat_mod in get_question_stats(question_id):
         edit_stat(stat_mod['stat_id'], stat_mod[answer])
-    # cur = execute('UPDATE question_stats SET yes = ?, no = ? WHERE question_id = ? and stat_id = ?', yes, no, question_id, stat_id)
-
 
 
 def new_question(question, stats):
@@ -113,18 +120,14 @@ def edit_question_stat(question_id, stat_id, yes, no):
 def get_question_stats(question_id):
     cur = execute("SELECT stat_id, name, yes, no FROM question_stats JOIN stats ON stats.id = stat_id WHERE question_id = ?", question_id)
 
-    stats = []
-    for stat_id, name, yes, no in cur:
-        stats.append({'stat_id': stat_id,
-                      'name': name,
-                      'yes': yes,
-                      'no': no})
+    q_stats = tuple_list_to_dict_list(cur, ['stat_id', 'name', 'yes', 'no'])
     
-    return stats
+    return q_stats
 
 
 def new_stat(stat_name, val):
-    execute("INSERT INTO stats (name, value) VALUES (?, ?);", stat_name, val)
+    cur = execute("INSERT INTO stats (name, value) VALUES (?, ?);", stat_name, val)
+    return cur.lastrowid
 
 
 def edit_stat(stat_id, change):
@@ -134,12 +137,7 @@ def edit_stat(stat_id, change):
 def get_stats():
     cur = execute("SELECT id, name, value FROM stats")
 
-    stats = []
-    for stat_id, name, value in cur:
-        stats.append({'stat_id': stat_id,
-                      'name': name,
-                      'value': value})
-    
+    stats = tuple_list_to_dict_list(cur, ['stat_id', 'name', 'value'])
     return stats
     
 
