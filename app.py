@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Flask, Response
+from flask import Flask, Response, render_template
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
@@ -32,6 +32,12 @@ def json_response(obj):
 
 @app.route('/')
 def index():
+    # questions = db.get_questions(0, 10)
+    return render_template('ask.html')
+
+
+@app.route('/questions')
+def questions():
     questions = db.get_questions(0, 10)
     return json_response(questions)
 
@@ -39,7 +45,18 @@ def index():
 @app.route('/questions/<int:question_id>')
 def get_question(question_id):
     question = db.get_questions(question_id)
-    return str(question)
+    if question:
+        question = question[0]
+    return json_response(question)
+
+
+@app.route('/questions/<int:question_id>/<answer>')
+def answer_question(question_id, answer):
+    print "answering %s: %s" % (question_id, answer)
+
+    db.answer_question(question_id, answer)
+    # return ("Error", 400, [])
+    return "OK"
 
 
 @app.route('/stats')

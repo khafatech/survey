@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<script src="static/jquery-3.2.1.min.js"></script>
+
+<script type="text/javascript">
+
+
+    function next_question(prev_id) {
+        let question = null;
+        $.ajax({
+            async: false,
+            url: 'questions/' + (prev_id + 1),
+            dataType: 'json',
+            success: function(data) {
+                question = data;
+            }
+        });
+        return question;
+    }
+
+    function answer_question(question_id, answer) {
+        $.ajax({
+            async: false,
+            url: `questions/${question_id}/${answer}`,
+            dataType: 'json',
+            success: function(data) {
+                console.log('answered question ' + question_id);
+            }
+        });
+    }
+
+    function get_answer() {
+        return $('[name=answer]:checked').val();
+    }
+
+    var next_id;
+
+    $(document).ready(function() {
+        let question_id_start = 0;
+        next_id = question_id_start;
+
+
+        question = next_question(next_id);
+        question_box.innerText = question['question'];
+        next_id = question.id
+
+        $('#next').click(function(event) {
+            answer_question(question.id, get_answer());
+            event.preventDefault();
+            question = next_question(next_id);
+            if (question.question === undefined) {
+                alert("done!");
+                question = next_question(question_id_start);
+            }
+            next_id = question['id'];
+            question_box.innerText = question['question'];
+        });
+
+    });
+</script>
+
+</head>
+
+
+<body>
+
+    <div id="question_box"></div>
+
+    <form>
+        <ul>
+           <li><input type="radio" name="answer", value="yes">Yes</li>
+           <li><input type="radio" name="answer", value="no">No</li>
+        <ul>
+    </form>
+
+    <button id="next">Next</button>
+
+</body>
+</html>
+

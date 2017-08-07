@@ -50,9 +50,7 @@ def get_con():
             return nonflask_con
     if con is None:
         con = g._database = sqlite3.connect(DATABASE)
-        return con
-    else:
-        return None
+    return con
 
 
 def setup():
@@ -85,6 +83,7 @@ def answer_question(question_id, answer):
         raise Exception("answer should be yes or no")
     
     for stat_mod in get_question_stats(question_id):
+        print "modifying stat for q %s: %s" % (question_id, stat_mod[answer])
         edit_stat(stat_mod['stat_id'], stat_mod[answer])
 
 
