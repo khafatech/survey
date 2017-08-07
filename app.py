@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 
 import json
+import logging
 
 from flask import Flask, Response, render_template
 from flask_admin import Admin
@@ -11,7 +12,11 @@ import models
 
 app = Flask(__name__)
 app.secret_key = 'supersecret'
+logging.basicConfig(level=logging.INFO)
 
+
+
+# For the admin page
 
 class QuestionView(ModelView):
     # edit child models inline
@@ -35,6 +40,7 @@ def index():
 
 @app.route('/questions')
 def questions():
+
     questions = db.get_questions(0, 10)
     return json_response(questions)
 
@@ -49,11 +55,13 @@ def get_question(question_id):
 
 @app.route('/questions/<int:question_id>/<answer>')
 def answer_question(question_id, answer):
-    print "answering %s: %s" % (question_id, answer)
+	logging.info("answering %s: %s" % (question_id, answer))
 
-    db.answer_question(question_id, answer)
-    # return ("Error", 400, [])
-    return "OK"
+	try:
+		db.answer_question(question_id, answer)
+	except:
+		return ("Error", 400, [])
+	return "OK"
 
 
 @app.route('/stats')
@@ -65,5 +73,6 @@ def stats():
 def json_response(obj):
     return Response(json.dumps(obj), mimetype='application/json')
 
+
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', debug=True)
+    app.run(host='0.0.0.0', debug=False)
