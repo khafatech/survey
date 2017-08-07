@@ -5,6 +5,8 @@
 
 <script src="static/jquery-3.2.1.min.js"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
+{# <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script> #}
+
 
 <script type="text/javascript">
 
@@ -40,12 +42,13 @@
     }
 
     var next_id;
+    var chart;
 
     $(document).ready(function() {
         let question_id_start = 0;
         next_id = question_id_start;
 
-        create_chart();
+        chart = create_chart(get_stats());
 
         question = next_question(next_id);
         question_box.innerText = question['question'];
@@ -59,12 +62,13 @@
                 alert('Please select an answer');
                 return;
             }
-            create_chart();
-
+            
             answer_question(question.id, answer);
+            update_chart(get_stats());
             question = next_question(next_id);
+            
             if (question.question === undefined) {
-                alert("done!");
+                console.log("done");
                 question = next_question(question_id_start);
             }
             next_id = question['id'];
@@ -84,21 +88,17 @@
             }
         });
         return stats;
-    }
+     }
 
     /* This retrieves the data and creates a new chart.
        Very inefficient but works for this case.
     */
-    var the_chart;
-    function create_chart() {
-        stats = get_stats();
+    function create_chart(stats) {
         categories = stats.map((s) => s.name);
         data = stats.map((s) => s.value);
 
-        if (the_chart !== undefined) {
-            the_chart.destroy();
-        }
-        the_chart = new Highcharts.Chart({
+
+        chart = new Highcharts.Chart({
             chart: {
                 type: 'bar',
                 renderTo: 'chart'
@@ -109,13 +109,32 @@
             xAxis: {
                 categories: categories,
             },
+            /*
             series: [{
                 name: 'stats',
                 data: data,
                 animation: false,
             }],
+            */
         });
-   }
+        chart.addSeries({
+                name: 'stats',
+                data: data,
+                animation: false,
+        }, false);
+        chart.redraw();
+        
+        return chart;
+    }
+    
+    function update_chart(stats) {
+        data = stats.map((s) => s.value);
+        console.log("updating chart:" + data);
+        chart.series[0].setData(data, false);
+        chart.redraw();
+    }
+   
+   
 
 </script>
 
@@ -126,6 +145,11 @@
     height: 400px;
     margin: 0 auto;
 }
+
+ul {
+    list-style-type: none;
+}
+
 </style>
 
 
@@ -145,9 +169,9 @@
 
     <button id="next">Next</button>
 
-    <div id="chartcontainer">
-        <div id="chart" class="achart"></div>
-    </div>
+	<div id="chart-container">
+		<div id="chart" class="achart"></div>
+	</div>
 
 </body>
 </html>
