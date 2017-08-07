@@ -1,43 +1,20 @@
-
 import sqlite3
+import logging
 
 from flask import g
 
 
-schema="""
-CREATE TABLE questions (
-                id INTEGER PRIMARY KEY,
-                content TEXT NOT NULL
-                );
-
-CREATE TABLE stats (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                value INTEGER NOT NULL
-                );
-
-CREATE TABLE question_stats (
-    id INTEGER PRIMARY KEY,
-    stat_id INTEGER,
-    question_id INTEGER,
-    yes INTEGER,
-    no INTEGER,
-
-    FOREIGN KEY (stat_id) REFERENCES stats(id)
-    FOREIGN KEY (question_id) REFERENCES questions(id)
-    );
-
-
--- CREATE INDEX question_id_idx ON questions(id);
-
-"""
-
 DATABASE = 'db.sqlite3'
+SCHEMA = 'schema.sql'
 
 nonflask_con = None
 
 def get_con():
-    """ returns a database connection """
+    """
+        Returns a database connection.
+        If running inside a flask application, stores the connection in the global object.
+        If outside of flask, uses a global var to store the connection.
+    """
     global nonflask_con
     try:
         con = getattr(g, '_database', None)
@@ -45,7 +22,7 @@ def get_con():
         if nonflask_con:
             return nonflask_con
         else:
-            print "using non-flask db connection"
+            logging.info("using non-flask db connection")
             nonflask_con = sqlite3.connect(DATABASE)
             return nonflask_con
     if con is None:
@@ -55,6 +32,7 @@ def get_con():
 
 def setup():
     con = get_con()
+    schema = open(SCHEMA).read()
     for query in schema.split(';'):
         con.execute(query)
 
@@ -83,7 +61,7 @@ def answer_question(question_id, answer):
         raise Exception("answer should be yes or no")
     
     for stat_mod in get_question_stats(question_id):
-        print "modifying stat for q %s: %s" % (question_id, stat_mod[answer])
+        logging.info("modifying stat for q %s: %s" % (question_id, stat_mod[answer]))
         edit_stat(stat_mod['stat_id'], stat_mod[answer])
 
 

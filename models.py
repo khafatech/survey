@@ -4,10 +4,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 
+import db
+
 
 Base = declarative_base()
 
-engine = create_engine('sqlite:///db.sqlite3', echo=True)
+engine = create_engine('sqlite:///%s' % db.DATABASE, echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
 
