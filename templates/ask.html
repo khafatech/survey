@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 
 <script src="static/jquery-3.2.1.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
 
 <script type="text/javascript">
 
 
+    /* returns the question with a question id higher than. Blocks */
     function next_question(prev_id) {
         let question = null;
         $.ajax({
@@ -27,6 +29,7 @@
             url: `questions/${question_id}/${answer}`,
             dataType: 'json',
             success: function(data) {
+                alert('answered');
                 console.log('answered question ' + question_id);
             }
         });
@@ -42,14 +45,23 @@
         let question_id_start = 0;
         next_id = question_id_start;
 
+        create_chart();
 
         question = next_question(next_id);
         question_box.innerText = question['question'];
-        next_id = question.id
+        next_id = question.id;
 
         $('#next').click(function(event) {
-            answer_question(question.id, get_answer());
             event.preventDefault();
+
+            answer = get_answer();
+            if (! /(yes)|(no)/.test(answer)) {
+                alert('Please select an answer');
+                return;
+            }
+            create_chart();
+
+            answer_question(question.id, answer);
             question = next_question(next_id);
             if (question.question === undefined) {
                 alert("done!");
@@ -58,9 +70,64 @@
             next_id = question['id'];
             question_box.innerText = question['question'];
         });
-
     });
+
+
+    function get_stats() {
+        let stats = null;
+        $.ajax({
+            async: false,
+            url: 'stats',
+            dataType: 'json',
+            success: function(data) {
+                stats = data;
+            }
+        });
+        return stats;
+    }
+
+    /* This retrieves the data and creates a new chart.
+       Very inefficient but works for this case.
+    */
+    var the_chart;
+    function create_chart() {
+        stats = get_stats();
+        categories = stats.map((s) => s.name);
+        data = stats.map((s) => s.value);
+
+        if (the_chart !== undefined) {
+            the_chart.destroy();
+        }
+        the_chart = new Highcharts.Chart({
+            chart: {
+                type: 'bar',
+                renderTo: 'chart'
+            },
+            title: {
+                text: 'Stats/Token values'
+            },
+            xAxis: {
+                categories: categories,
+            },
+            series: [{
+                name: 'stats',
+                data: data,
+                animation: false,
+            }],
+        });
+   }
+
 </script>
+
+<style>
+.achart {
+    min-width: 310px;
+    max-width: 800px;
+    height: 400px;
+    margin: 0 auto;
+}
+</style>
+
 
 </head>
 
@@ -73,10 +140,14 @@
         <ul>
            <li><input type="radio" name="answer", value="yes">Yes</li>
            <li><input type="radio" name="answer", value="no">No</li>
-        <ul>
+        </ul>
     </form>
 
     <button id="next">Next</button>
+
+    <div id="chartcontainer">
+        <div id="chart" class="achart"></div>
+    </div>
 
 </body>
 </html>
